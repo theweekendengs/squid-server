@@ -1,0 +1,106 @@
+Connect to the Ubuntu Instance:
+
+Use SSH to connect to the Squid proxy instance:
+
+ssh -i <your-key.pem> ubuntu@<squid-public-ip>
+
+Alternatively, use AWS Systems Manager Session Manager if the IAM role is configured.
+-------------------------------
+
+1.Update and Install Squid:
+
+1a.Update the package index and install Squid:
+
+sudo apt update
+sudo apt install -y squid
+
+
+1b. Verify Squid is running:
+
+sudo systemctl status squid
+
+
+
+2.Create the Whitelist File:
+
+2a.Create /etc/squid/whitelist.txt:
+
+sudo vi /etc/squid/whitelist.txt
+
+Add allowed domains (one per line, with leading dot for subdomains):
+
+.google.com
+.microsoft.com
+.bing.com
+.pro.ip-api.com
+
+Save and exit (Ctrl+O, Enter, Ctrl+X).
+
+3. Set permissions:
+
+sudo chown proxy:proxy /etc/squid/whitelist.txt
+sudo chmod 644 /etc/squid/whitelist.txt
+
+3a. Configure Squid:
+
+Backup the default configuration:
+
+sudo cp /etc/squid/squid.conf /etc/squid/squid.conf.bak
+
+Edit /etc/squid/squid.conf:
+
+sudo vi /etc/squid/squid.conf
+
+-------------------
+
+3b. Replace its contents with the following minimal configuration:
+
+# Define ACLs
+acl localnet src 10.0.2.0/24  # Private subnet CIDR
+acl whitelist_domains dstdomain "/etc/squid/whitelist.txt"
+acl SSL_ports port 443
+acl Safe_ports port 80  # HTTP
+acl Safe_ports port 443 # HTTPS
+acl CONNECT method CONNECT
+
+# Access rules
+http_access deny !Safe_ports
+http_access allow localnet whitelist_domains
+http_access allow CONNECT SSL_ports whitelist_domains
+http_access deny all
+
+# Port configuration
+http_port 3128
+
+# Logging
+access_log /var/log/squid/access.log squid
+cache_log /var/log/squid/cache.log
+
+-------------------
+
+Save and exit.
+
+4. Validate and Reload Squid:
+
+Check configuration syntax:
+
+sudo squid -k parse
+
+
+5. Reload Squid to apply changes:
+
+sudo squid -k reconfigure
+
+
+If Squid fails to start, restart it:
+
+sudo systemctl restart squid
+
+
+6. Test Squid Locally:
+
+Use curl to verify the proxy works:
+
+curl -x http://localhost:3128 http://google.com
+
+If successful, you should see HTML output. Try a non-whitelisted domain (e.g., example.com) to confirm it’s blocked (should return a 403 error).

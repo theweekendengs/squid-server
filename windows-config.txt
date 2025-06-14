@@ -1,0 +1,26 @@
+Configure the Windows Server to Use the Squid Proxy
+
+Connect to the Windows Server:
+
+Use RDP to connect to the Windows Server via a bastion host or AWS Systems Manager Session Manager, as it’s in a private subnet.
+
+Configure System-Wide Proxy:
+
+Open Control Panel > Network and Internet > Internet Options.
+Go to the Connections tab and click LAN settings.
+Check Use a proxy server for your LAN.
+
+Enter the Squid proxy’s private IP (e.g., 10.0.1.100) and port (3128) in the Address and Port fields.
+
+Click OK and Apply.
+---------------------
+
+Test Proxy Connectivity:
+
+Open a Command Prompt and test with curl:
+
+curl -x http://10.0.1.100:3128 https://www.google.com
+
+If successful, you should see HTML output. Test a non-whitelisted domain (e.g., http://example.com) to confirm it’s blocked (should return a 403 error).
+
+Open a web browser and try accessing https://www.google.com (should work) and http://example.com (should be blocked).

@@ -1,0 +1,55 @@
+Step 5: Troubleshooting
+
+403 Forbidden Errors:
+
+Verify the domain is in /etc/squid/whitelist.txt (use a leading dot for subdomains, e.g., .google.com).
+
+Check ACLs in squid.conf to ensure the Windows Server’s IP is in localnet.
+Confirm the whitelist.txt file path and permissions.
+
+
+Connection Issues:
+
+Ensure the Squid proxy’s private IP and port (3128) are correctly set in the Windows Server’s proxy settings.
+
+Verify security group rules allow TCP 3128 from the private subnet to the Squid instance.
+
+
+Transaction Errors:
+
+If error:transaction-end-before-headers appears in logs, check network connectivity (ping 10.0.1.100 from the Windows Server) and increase timeouts in squid.conf:
+
+request_timeout 30 seconds
+connect_timeout 10 seconds
+
+
+Testing:
+
+Use curl from the Windows Server to diagnose:
+
+curl -x http://10.0.1.100:3128 https://www.google.com
+
+
+Post-Deployment Maintenance:
+
+Update Whitelist:
+
+Edit /etc/squid/whitelist.txt to add/remove domains and reload Squid:
+
+sudo squid -k reconfigure
+
+
+Monitor Performance:
+
+Use tools like sarg to generate reports on Squid usage:
+
+sudo apt install -y sarg
+sarg -x
+
+
+Backup Configurations:
+
+Regularly back up /etc/squid/squid.conf and /etc/squid/whitelist.txt:
+
+sudo cp /etc/squid/squid.conf /etc/squid/squid.conf.bak
+sudo cp /etc/squid/whitelist.txt /etc/squid/whitelist.txt.bak

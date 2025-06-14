@@ -1,0 +1,62 @@
+Create a VPC and Subnets:
+
+In the AWS Management Console, navigate to VPC > Your VPCs > Create VPC.
+
+
+Set CIDR block (e.g., 10.0.0.0/16).
+
+
+Create a public subnet (e.g., 10.0.1.0/24) and a private subnet (e.g., 10.0.2.0/24).
+
+
+Attach an Internet Gateway to the VPC and update the public subnet’s route table to route 0.0.0.0/0 to the Internet Gateway.
+
+
+Ensure the private subnet’s route table routes 0.0.0.0/0 to a NAT Gateway in the public subnet (or configure the Squid instance as a NAT instance later).
+
+
+2. Configure Security Groups:
+
+
+2a. Squid Proxy Security Group:
+
+Inbound: Allow TCP 3128 (Squid port) from the private subnet’s CIDR (e.g., 10.0.2.0/24).
+Inbound: Allow SSH (TCP 22) from your IP or a trusted range for management.
+Outbound: Allow all traffic (0.0.0.0/0) for internet access.
+
+
+2b. Windows Server Security Group:
+
+Inbound: Allow RDP (TCP 3389) from a trusted IP or bastion host for management.
+Outbound: Allow TCP 3128 to the Squid proxy’s private IP (e.g., 10.0.1.x).
+Outbound: Allow all traffic to the private subnet’s CIDR for internal communication.
+
+
+
+3. Launch EC2 Instances:
+
+3a.Squid Proxy Instance:
+
+AMI: Ubuntu Server 22.04 LTS.
+Instance type: t3.micro (or larger based on load).
+Subnet: Public subnet (e.g., 10.0.1.0/24).
+Auto-assign public IP: Enabled.
+
+Attach the Squid proxy security group.
+Add an IAM role with AmazonSSMManagedInstanceCore policy for Systems Manager (SSM) access (optional for secure management).
+
+
+
+3b.Windows Server Instance:
+
+AMI: Windows Server 2022 Base.
+Instance type: t3.medium (or larger based on needs).
+Subnet: Private subnet (e.g., 10.0.2.0/24).
+Auto-assign public IP: Disabled.
+
+Attach the Windows Server security group.
+
+Note Instance IPs:
+
+Record the Squid proxy’s private IP (e.g., 10.0.1.100) and the Windows Server’s private IP (e.g., 10.0.2.100).
+
